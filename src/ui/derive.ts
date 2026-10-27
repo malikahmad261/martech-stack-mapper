@@ -1,8 +1,6 @@
-import { useMemo } from 'react';
 import { LINK_FLOW } from '../engine/graph';
 import { worstHealth } from '../engine/scan';
 import type { Anomaly, Entity, Health, Issue, Link, LinkType, ToolId } from '../model/schema';
-import { useStore } from '../store';
 import { SEVERITY } from './meta';
 
 export const isActiveIssue = (i: Issue) => i.status === 'open' || i.status === 'fix_pending';
@@ -16,10 +14,6 @@ export function healthScore(issues: Issue[]) {
 
 export function scoreColor(score: number) {
   return score >= 80 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-rose-600';
-}
-
-export function issuesForTool(tool: ToolId, issues: Issue[], byId: Map<string, Entity>) {
-  return issues.filter((i) => isActiveIssue(i) && byId.get(i.entityIds[0])?.tool === tool);
 }
 
 export function toolHealth(tool: ToolId, entities: Entity[]): Health {
@@ -52,19 +46,4 @@ export function toolEdges(entities: Entity[], links: Link[]): ToolEdge[] {
   }
   for (const e of edges.values()) e.health = worstHealth(e.links.map((l) => l.health));
   return [...edges.values()];
-}
-
-export function useCounts() {
-  const issues = useStore((s) => s.issues);
-  const anomalies = useStore((s) => s.anomalies);
-  const fixes = useStore((s) => s.fixes);
-  return useMemo(
-    () => ({
-      issues: issues.filter(isActiveIssue).length,
-      anomalies: anomalies.filter(isActiveAnomaly).length,
-      fixes: fixes.filter((f) => ['draft', 'edited', 'approved'].includes(f.status) && f.issueIds.some((id) => issues.find((i) => i.id === id && isActiveIssue(i)))).length,
-      score: healthScore(issues),
-    }),
-    [issues, anomalies, fixes],
-  );
 }

@@ -1,10 +1,13 @@
 import clsx from 'clsx';
-import { X } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { ChevronRight, X } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { SEVERITY_PLAIN } from '../../insights/plain';
+import type { ProblemStatus } from '../../insights/problems';
 import type { Entity, Health, Severity, ToolId } from '../../model/schema';
 import { useEntityMap } from '../../store';
-import { HEALTH, KIND_LABEL, SEVERITY, TOOLS, entityPath } from '../meta';
+import { useDetailed } from '../../store/ui';
+import { HEALTH, KIND_LABEL, TOOLS, entityPath } from '../meta';
 
 export function Badge({ className, children }: { className?: string; children: ReactNode }) {
   return <span className={clsx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset', className)}>{children}</span>;
@@ -21,10 +24,6 @@ export function HealthBadge({ health }: { health: Health }) {
       {HEALTH[health].label}
     </Badge>
   );
-}
-
-export function SeverityBadge({ severity }: { severity: Severity }) {
-  return <Badge className={SEVERITY[severity].badge}>{SEVERITY[severity].label}</Badge>;
 }
 
 export function ToolBadge({ tool, size = 'sm' }: { tool: ToolId; size?: 'sm' | 'xs' }) {
@@ -144,7 +143,7 @@ export function Drawer({ open, onClose, children, wide }: { open: boolean; onClo
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-40 flex justify-end">
+    <div className="fixed inset-y-0 left-0 right-[var(--assistant-w,0px)] z-40 !m-0 flex justify-end">
       <div className="absolute inset-0 bg-slate-900/20" onClick={onClose} />
       <aside className={clsx('relative flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl', wide ? 'max-w-3xl' : 'max-w-2xl')}>
         <button onClick={onClose} className="absolute right-3 top-3 z-10 rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close">
@@ -159,7 +158,7 @@ export function Drawer({ open, onClose, children, wide }: { open: boolean; onClo
 export function Modal({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 !m-0 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/30" onClick={onClose} />
       <div className="relative w-full max-w-xl rounded-xl bg-white shadow-2xl">
         <div className="border-b border-slate-100 px-5 py-4 text-base font-semibold">{title}</div>
@@ -177,6 +176,7 @@ export function Button({
   disabled,
   title,
   size = 'md',
+  className,
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -184,6 +184,7 @@ export function Button({
   disabled?: boolean;
   title?: string;
   size?: 'sm' | 'md';
+  className?: string;
 }) {
   return (
     <button
@@ -198,9 +199,80 @@ export function Button({
         variant === 'secondary' && 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
         variant === 'danger' && 'border border-rose-200 bg-white text-rose-700 hover:bg-rose-50',
         variant === 'ghost' && 'text-slate-600 shadow-none hover:bg-slate-100',
+        className,
       )}
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * The expert layer. Collapsed in Simple view, open in Detailed view; either way one click away.
+ * Remembers a manual toggle until the view mode changes.
+ */
+export function Technical({ children, title = 'Technical details', summary, id }: { children: ReactNode; title?: string; summary?: ReactNode; id?: string }) {
+  const detailed = useDetailed();
+  const [open, setOpen] = useState<boolean | null>(null);
+  useEffect(() => setOpen(null), [detailed]);
+  const isOpen = open ?? detailed;
+  return (
+    <section id={id} className="rounded-xl border border-slate-200">
+      <button onClick={() => setOpen(!isOpen)} className="flex w-full items-center gap-2 px-4 py-2.5 text-left">
+        <ChevronRight size={14} className={clsx('shrink-0 text-slate-400 transition', isOpen && 'rotate-90')} />
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</span>
+        {summary && !isOpen && <span className="truncate text-xs text-slate-400">{summary}</span>}
+      </button>
+      {isOpen && <div className="space-y-6 border-t border-slate-100 px-4 py-4">{children}</div>}
+    </section>
+  );
+}
+
+export function SectionTitle({ children, actions }: { children: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{children}</h3>
+      {actions}
+    </div>
+  );
+}
+
+const PLAIN_SEVERITY_STYLE: Record<Severity, string> = {
+  critical: 'bg-rose-600 text-white ring-rose-600',
+  high: 'bg-rose-50 text-rose-700 ring-rose-200',
+  medium: 'bg-amber-50 text-amber-800 ring-amber-200',
+  low: 'bg-slate-100 text-slate-600 ring-slate-200',
+};
+
+/** Severity in plain words (Urgent / Important / Worth fixing / Minor). */
+export function PlainSeverity({ severity }: { severity: Severity }) {
+  return (
+    <Badge className={PLAIN_SEVERITY_STYLE[severity]}>
+      <span title={SEVERITY_PLAIN[severity].hint}>{SEVERITY_PLAIN[severity].label}</span>
+    </Badge>
+  );
+}
+
+export const PROBLEM_STATUS: Record<ProblemStatus, { label: string; cls: string }> = {
+  open: { label: 'Open', cls: 'bg-white text-slate-700 ring-slate-300' },
+  review_requested: { label: 'Review requested', cls: 'bg-violet-50 text-violet-700 ring-violet-200' },
+  approved: { label: 'Fix approved', cls: 'bg-indigo-50 text-indigo-700 ring-indigo-200' },
+  fixed: { label: 'Fixed', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+  verifying: { label: 'Fixed — verifying', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+  dismissed: { label: 'Dismissed', cls: 'bg-slate-100 text-slate-500 ring-slate-200' },
+  expected: { label: 'Expected', cls: 'bg-sky-50 text-sky-700 ring-sky-200' },
+};
+
+export function ProblemStatusBadge({ status }: { status: ProblemStatus }) {
+  return <Badge className={PROBLEM_STATUS[status].cls}>{PROBLEM_STATUS[status].label}</Badge>;
+}
+
+export function ToolDots({ tools }: { tools: ToolId[] }) {
+  return (
+    <span className="flex flex-wrap gap-1">
+      {tools.map((t) => (
+        <ToolBadge key={t} tool={t} size="xs" />
+      ))}
+    </span>
   );
 }

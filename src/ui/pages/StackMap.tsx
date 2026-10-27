@@ -6,9 +6,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FLOW_LABELS } from '../../engine/graph';
 import type { Health, Tool, ToolId } from '../../model/schema';
 import { useEntityMap, useStore } from '../../store';
-import { Card, HealthBadge, HealthDot, PageHeader, SeverityBadge } from '../components/common';
+import { Card, HealthBadge, HealthDot, PageHeader, PlainSeverity } from '../components/common';
 import { healthScore, isActiveAnomaly, isActiveIssue, scoreColor, toolEdges, toolHealth } from '../derive';
-import { ANOMALY, HEALTH, TOOLS } from '../meta';
+import { useActiveProblems } from '../hooks';
+import { HEALTH, TOOLS, TOOL_ORDER } from '../meta';
 
 const POSITIONS: Record<ToolId, { x: number; y: number }> = {
   site: { x: 0, y: 190 },
@@ -65,8 +66,8 @@ export function StackMap() {
   const links = useStore((s) => s.links);
   const issues = useStore((s) => s.issues);
   const anomalies = useStore((s) => s.anomalies);
-  const fixes = useStore((s) => s.fixes);
   const byId = useEntityMap();
+  const active = useActiveProblems();
 
   const edges = useMemo(() => toolEdges(entities, links), [entities, links]);
   const activeIssues = issues.filter(isActiveIssue);
@@ -119,8 +120,8 @@ export function StackMap() {
   });
 
   const score = healthScore(issues);
-  const bySeverity = (['critical', 'high', 'medium', 'low'] as const).map((s) => ({ s, n: activeIssues.filter((i) => i.severity === s).length }));
-  const pendingFixes = fixes.filter((f) => ['draft', 'edited', 'approved'].includes(f.status) && f.issueIds.some((id) => activeIssues.some((i) => i.id === id)));
+  const bySeverity = (['critical', 'high', 'medium', 'low'] as const).map((s) => ({ s, n: active.filter((p) => p.severity === s).length }));
+  const byTool = TOOL_ORDER.filter((t) => t !== 'site').map((t) => ({ t, n: active.filter((p) => p.tools.includes(t)).length }));
 
   return (
     <div>
@@ -170,41 +171,30 @@ export function StackMap() {
             <div className={clsx('mt-1 text-4xl font-semibold tabular-nums', scoreColor(score))}>{score}</div>
             <p className="mt-1 text-xs text-slate-500">100 minus weighted open issues (critical 8, high 5, medium 2, low 1).</p>
           </Card>
-          <Card title="Open issues" actions={<Link to="/issues" className="text-xs font-medium text-indigo-600 hover:underline">View all</Link>}>
-            <div className="grid grid-cols-2 gap-2 p-4">
-              {bySeverity.map(({ s, n }) => (
-                <Link key={s} to="/issues" className="rounded-lg border border-slate-100 p-2.5 hover:border-slate-300">
-                  <div className="text-xl font-semibold tabular-nums">{n}</div>
-                  <SeverityBadge severity={s} />
-                </Link>
-              ))}
-            </div>
-          </Card>
-          <Card title="Active anomalies" actions={<Link to="/anomalies" className="text-xs font-medium text-indigo-600 hover:underline">View all</Link>}>
+          <Card title="Open problems" actions={<Link to="/problems" className="text-xs font-medium text-indigo-600 hover:underline">View all</Link>}>
             <ul className="divide-y divide-slate-100">
-              {(['tracking_outage', 'bot_traffic', 'spend_driven'] as const).map((t) => (
-                <li key={t}>
-                  <Link to={`/anomalies?type=${t}`} className="flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50">
-                    <span className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full" style={{ background: ANOMALY[t].color }} />
-                      {ANOMALY[t].label}
-                    </span>
-                    <span className="font-semibold tabular-nums">{activeAnoms.filter((a) => a.type === t).length}</span>
+              {bySeverity.map(({ s, n }) => (
+                <li key={s}>
+                  <Link to="/problems" className="flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50">
+                    <PlainSeverity severity={s} />
+                    <span className="font-semibold tabular-nums">{n}</span>
                   </Link>
                 </li>
               ))}
             </ul>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Fixes awaiting review</div>
-                <div className="mt-1 text-2xl font-semibold tabular-nums">{pendingFixes.length}</div>
-              </div>
-              <Link to="/fixes" className="text-xs font-medium text-indigo-600 hover:underline">
-                Open queue
-              </Link>
-            </div>
+          <Card title="By tool">
+            <ul className="divide-y divide-slate-100">
+              {byTool.map(({ t, n }) => (
+                <li key={t} className="flex items-center justify-between px-4 py-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: TOOLS[t].color }} />
+                    {TOOLS[t].label}
+                  </span>
+                  <span className={clsx('tabular-nums', n ? 'font-semibold text-rose-600' : 'text-slate-400')}>{n}</span>
+                </li>
+              ))}
+            </ul>
           </Card>
         </div>
       </div>

@@ -1,4 +1,7 @@
+import { Sparkles, X } from 'lucide-react';
+import { useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useChat } from '../../store/chat';
 import { MetricIndex } from '../../engine/metrics';
 import type { Entity } from '../../model/schema';
 import { METRICS } from '../../store';
@@ -54,6 +57,7 @@ export function MetricChart({
   windowColor = '#f43f5e',
   markers = [],
   days = 90,
+  selectFor,
 }: {
   series: Series[];
   height?: number;
@@ -61,15 +65,43 @@ export function MetricChart({
   windowColor?: string;
   markers?: { date: string; label: string }[];
   days?: number;
+  /** Entity whose data a dragged date range hands to the assistant. Enables drag-to-select. */
+  selectFor?: string;
 }) {
+  const [drag, setDrag] = useState<{ a: string; b: string; done: boolean } | null>(null);
   const dates = metricIndex.dates.slice(-days);
   const offset = metricIndex.dates.length - dates.length;
   const data = dates.map((d, i) => ({ date: d, ...Object.fromEntries(series.map((s) => [s.key, s.values[offset + i]])) }));
   const hasRight = series.some((s) => s.axis === 'right');
+  const range = drag ? ([drag.a, drag.b].sort() as [string, string]) : null;
+  const label = (d: string) => fmtDate(`${d}T00:00:00Z`);
   return (
-    <div style={{ height }} className="w-full">
+    <div className="relative w-full">
+    {selectFor && range && drag?.done && (
+      <div className="absolute right-2 top-0 z-10 flex items-center gap-1 rounded-lg border border-violet-200 bg-white p-0.5 shadow-md">
+        <button
+          onClick={() => {
+            useChat.getState().add({ kind: 'metric', entityId: selectFor, start: range[0], end: range[1] });
+            setDrag(null);
+          }}
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-violet-700 hover:bg-violet-50"
+        >
+          <Sparkles size={12} /> Ask about {label(range[0])} – {label(range[1])}
+        </button>
+        <button onClick={() => setDrag(null)} className="rounded p-1 text-slate-400 hover:text-slate-700" aria-label="Clear selection">
+          <X size={12} />
+        </button>
+      </div>
+    )}
+    <div style={{ height }} className={selectFor ? 'w-full cursor-crosshair select-none' : 'w-full'}>
       <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 8, right: hasRight ? 0 : 8, bottom: 0, left: -8 }}>
+        <LineChart
+          data={data}
+          margin={{ top: 8, right: hasRight ? 0 : 8, bottom: 0, left: -8 }}
+          onMouseDown={selectFor ? (e: any) => e?.activeLabel && setDrag({ a: e.activeLabel, b: e.activeLabel, done: false }) : undefined}
+          onMouseMove={selectFor ? (e: any) => drag && !drag.done && e?.activeLabel && setDrag({ ...drag, b: e.activeLabel }) : undefined}
+          onMouseUp={selectFor ? () => drag && setDrag(drag.a === drag.b ? null : { ...drag, done: true }) : undefined}
+        >
           <CartesianGrid stroke="#f1f5f9" vertical={false} />
           <XAxis dataKey="date" tickFormatter={(d) => fmtDate(`${d}T00:00:00Z`)} tick={{ fontSize: 11, fill: '#94a3b8' }} minTickGap={36} axisLine={false} tickLine={false} />
           <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={44} tickFormatter={fmtNum} />
@@ -81,6 +113,7 @@ export function MetricChart({
           />
           {series.length > 1 && <Legend formatter={(k) => series.find((s) => s.key === k)?.label ?? k} wrapperStyle={{ fontSize: 12 }} iconType="plainline" />}
           {window && <ReferenceArea yAxisId="left" x1={window.start} x2={window.end} fill={windowColor} fillOpacity={0.08} stroke={windowColor} strokeOpacity={0.3} />}
+          {range && range[0] !== range[1] && <ReferenceArea yAxisId="left" x1={range[0]} x2={range[1]} fill="#7c3aed" fillOpacity={0.12} stroke="#7c3aed" strokeOpacity={0.5} />}
           {markers
             .filter((m) => dates.includes(m.date))
             .map((m) => (
@@ -91,6 +124,8 @@ export function MetricChart({
           ))}
         </LineChart>
       </ResponsiveContainer>
+    </div>
+    {selectFor && !drag && <div className="mt-1 text-right text-[11px] text-slate-400">Drag across the chart to ask the assistant about a date range</div>}
     </div>
   );
 }

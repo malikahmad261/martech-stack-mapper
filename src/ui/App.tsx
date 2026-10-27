@@ -1,8 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './Layout';
-import { Anomalies } from './pages/Anomalies';
-import { Fixes } from './pages/Fixes';
-import { Issues } from './pages/Issues';
+import { Overview } from './pages/Overview';
+import { LegacyRedirect, Problems } from './pages/Problems';
 import { Relationships } from './pages/Relationships';
 import { Scans } from './pages/Scans';
 import { StackMap } from './pages/StackMap';
@@ -13,13 +12,16 @@ export function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<StackMap />} />
+          <Route index element={<Overview />} />
+          <Route path="problems" element={<Problems />} />
+          <Route path="problems/:id" element={<Problems />} />
+          <Route path="map" element={<StackMap />} />
           <Route path="relationships" element={<Relationships />} />
           <Route path="tools/:toolId" element={<ToolPage />} />
-          <Route path="issues" element={<Issues />} />
-          <Route path="anomalies" element={<Anomalies />} />
-          <Route path="fixes" element={<Fixes />} />
           <Route path="scans" element={<Scans />} />
+          <Route path="issues" element={<LegacyRedirect kind="issues" />} />
+          <Route path="anomalies" element={<LegacyRedirect kind="anomalies" />} />
+          <Route path="fixes" element={<LegacyRedirect kind="fixes" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
