@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { -webkit-text-size-adjust: 100%; }
+body { background: #f8fafc; }
+.react-flow__edge-text { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
