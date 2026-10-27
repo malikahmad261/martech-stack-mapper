@@ -120,6 +120,8 @@ The dataset intentionally contains the issues and anomalies listed in §6.3 and 
 
 ## 5. Screens
 
+> **Update (UX pass):** the screens below were reorganised around two user types (client and consultant). Issues, anomalies and the fix queue are now one **Problems** screen; the home page is a conversion-health **Overview**; and an AI assistant was added. See [UX.md](UX.md). The detail below still describes what each part contains.
+
 Global layout: left navigation, top bar showing the latest scan time, overall health score, and a **Re-scan now** button.
 
 ### 5.1 Stack Map (overview)
@@ -569,7 +571,7 @@ Code layout keeps a hard boundary between `connectors/` (dummy now, live later),
 6. A fix can be edited (change values, remove/add operations, edit notes), validated, approved and applied. After applying, the issue is resolved, the map colours update, a GTM version bump appears where relevant, and the change log records it.
 7. "Re-scan now" creates a new scan entry whose summary reflects any fixes applied since the last scan.
 8. "Reset demo" restores the original state.
-9. The app is deployed on Vercel and usable on desktop; core screens are readable on mobile.
+9. The app is deployed on Vercel and usable on desktop (mobile deferred — D17).
 
 ---
 
@@ -589,3 +591,8 @@ Code layout keeps a hard boundary between `connectors/` (dummy now, live later),
 | D10 | Canned diagnoses and recommendations; no live LLM in Phase 1. |
 | D11 | Deploy on Vercel with password protection (Basic Auth middleware). |
 | D12 | High-level stack map without in-graph drill-down; drill-down lives on per-tool screens. |
+| D13 | Two user types — client and consultant — share one interface. A Simple / Detailed switch sets how much technical detail is shown by default; the role sets the starting value. |
+| D14 | Clients can apply low-risk fixes themselves and request a consultant's review for medium/high-risk fixes. Only consultants edit proposed values. |
+| D15 | Issues, the anomalies they caused and their fix are presented as one "Problem". The home page is a conversion × platform health grid, driven by a per-client conversion plan. |
+| D16 | AI-native: problems, entities, conversions, changes, table rows and chart date ranges can be added to an assistant as visible, inspectable context. Phase 1 replies are scripted from the demo data (consistent with D10); the assistant never applies changes. |
+| D17 | Desktop first; multi-client portfolio deferred. |

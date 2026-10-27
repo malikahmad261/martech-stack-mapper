@@ -20,6 +20,10 @@ export interface AppData {
 
 export const ACTOR = 'You (via Stack Mapper)';
 
+/** Change-log actor for a named person acting through the app. */
+export const viaApp = (name: string) => `${name} (via Stack Mapper)`;
+export const isAppActor = (actor: string) => actor.endsWith('(via Stack Mapper)');
+
 function rescanInternal(data: AppData, metrics: MetricPoint[], opts: { scanId: string; at: string; trigger: Scan['trigger']; record: boolean }) {
   return runScan({
     scanId: opts.scanId,
@@ -44,7 +48,7 @@ export function rescan(data: AppData, metrics: MetricPoint[], at: string, trigge
   return { ...data, tools: r.tools, entities: r.entities, links: r.links, issues: r.issues, fixes: r.fixes, anomalies: r.anomalies, ruleResults: r.ruleResults, scans: [scan, ...data.scans] };
 }
 
-export function updateFix(data: AppData, fixId: string, patch: { current?: FixOperation[]; notes?: string }, at: string): AppData {
+export function updateFix(data: AppData, fixId: string, patch: { current?: FixOperation[]; notes?: string }, at: string, by = ACTOR): AppData {
   const fix = data.fixes.find((f) => f.id === fixId);
   if (!fix || fix.status === 'applied') return data;
   const current = patch.current ?? fix.current;
@@ -53,7 +57,7 @@ export function updateFix(data: AppData, fixId: string, patch: { current?: FixOp
   // Any edit (including to an approved fix) needs a fresh approval.
   const status = fix.status === 'rejected' ? 'rejected' : edited ? 'edited' : 'draft';
   const last = fix.history[fix.history.length - 1];
-  const history = last?.action === 'Edited' ? fix.history : [...fix.history, { at, action: 'Edited', by: ACTOR }];
+  const history = last?.action === 'Edited' && last.by === by ? fix.history : [...fix.history, { at, action: 'Edited', by }];
   return {
     ...data,
     fixes: data.fixes.map((f) => (f.id === fixId ? { ...f, current, notes, status, history } : f)),
@@ -61,18 +65,18 @@ export function updateFix(data: AppData, fixId: string, patch: { current?: FixOp
   };
 }
 
-export function revertFix(data: AppData, fixId: string, at: string): AppData {
+export function revertFix(data: AppData, fixId: string, at: string, by = ACTOR): AppData {
   return {
     ...data,
     fixes: data.fixes.map((f) =>
       f.id === fixId && f.status !== 'applied'
-        ? { ...f, current: structuredClone(f.recommended), status: 'draft', history: [...f.history, { at, action: 'Reverted to recommendation', by: ACTOR }] }
+        ? { ...f, current: structuredClone(f.recommended), status: 'draft', history: [...f.history, { at, action: 'Reverted to recommendation', by }] }
         : f,
     ),
   };
 }
 
-export function setFixStatus(data: AppData, fixId: string, status: 'approved' | 'rejected' | 'draft', at: string): AppData {
+export function setFixStatus(data: AppData, fixId: string, status: 'approved' | 'rejected' | 'draft', at: string, by = ACTOR): AppData {
   const fix = data.fixes.find((f) => f.id === fixId);
   if (!fix || fix.status === 'applied') return data;
   if (status === 'approved') {
@@ -84,7 +88,7 @@ export function setFixStatus(data: AppData, fixId: string, status: 'approved' | 
   const nextStatus = status === 'draft' ? (edited ? 'edited' : 'draft') : status;
   return {
     ...data,
-    fixes: data.fixes.map((f) => (f.id === fixId ? { ...f, status: nextStatus, history: [...f.history, { at, action: label, by: ACTOR }] } : f)),
+    fixes: data.fixes.map((f) => (f.id === fixId ? { ...f, status: nextStatus, history: [...f.history, { at, action: label, by }] } : f)),
     issues: data.issues.map((i) =>
       fix.issueIds.includes(i.id) && (i.status === 'open' || i.status === 'fix_pending') ? { ...i, status: status === 'approved' ? 'fix_pending' : 'open' } : i,
     ),
@@ -92,7 +96,7 @@ export function setFixStatus(data: AppData, fixId: string, status: 'approved' | 
 }
 
 /** Simulated publish: apply the (possibly edited) operations, bump GTM versions, log changes, re-evaluate. */
-export function applyFix(data: AppData, metrics: MetricPoint[], fixId: string, at: string): AppData {
+export function applyFix(data: AppData, metrics: MetricPoint[], fixId: string, at: string, by = ACTOR): AppData {
   const fix = data.fixes.find((f) => f.id === fixId);
   if (!fix || fix.status !== 'approved') throw new Error('Only approved fixes can be applied');
   const v = validateOperations(data.baseEntities, fix.current);
@@ -120,19 +124,29 @@ export function applyFix(data: AppData, metrics: MetricPoint[], fixId: string, a
       kind = 'gtm_publish';
       entityIds.unshift(container.id);
     }
-    newEvents.push({ id: `${tool}:fix:${fix.id}:${at}`, tool, at, actor: ACTOR, kind, summary, entityIds, before, after });
+    newEvents.push({ id: `${tool}:fix:${fix.id}:${at}`, tool, at, actor: by, kind, summary, entityIds, before, after });
   }
 
   const tools = data.tools.map((t) => (touchedTools.includes(t.id) ? { ...t, lastChangedAt: at } : t));
   const fixes = data.fixes.map((f) =>
     f.id === fixId
-      ? { ...f, status: 'applied' as const, appliedChangeEventId: newEvents[0]?.id, history: [...f.history, { at, action: touchedTools.length ? 'Applied (simulated publish)' : 'Marked as done (manual fix)', by: ACTOR }] }
+      ? { ...f, status: 'applied' as const, appliedChangeEventId: newEvents[0]?.id, history: [...f.history, { at, action: touchedTools.length ? 'Applied (simulated publish)' : 'Marked as done (manual fix)', by }] }
       : f,
   );
   const next: AppData = { ...data, baseEntities: base, tools, fixes, changeEvents: [...data.changeEvents, ...newEvents] };
   // Re-evaluate straight away so the map and issues update; resolutions are credited to the next scan.
   const r = rescanInternal(next, metrics, { scanId: data.scans[0]?.id ?? 'live', at, trigger: 'on_demand', record: false });
   return { ...next, tools: r.tools, entities: r.entities, links: r.links, issues: r.issues, fixes: r.fixes, anomalies: r.anomalies, ruleResults: r.ruleResults };
+}
+
+/** A client asks a consultant to review a fix they can't approve themselves. */
+export function requestReview(data: AppData, fixId: string, at: string, by: string, note: string): AppData {
+  return {
+    ...data,
+    fixes: data.fixes.map((f) =>
+      f.id === fixId && f.status !== 'applied' ? { ...f, reviewRequest: { at, by, note }, history: [...f.history, { at, action: note ? `Review requested: "${note}"` : 'Review requested', by }] } : f,
+    ),
+  };
 }
 
 export function setIssueDismissed(data: AppData, issueId: string, dismissed: boolean): AppData {

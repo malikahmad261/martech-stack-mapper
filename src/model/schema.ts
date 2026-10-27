@@ -208,6 +208,8 @@ export const FixSchema = z.object({
   status: z.enum(['draft', 'edited', 'approved', 'applied', 'rejected']),
   history: z.array(z.object({ at: z.string(), action: z.string(), by: z.string() })),
   appliedChangeEventId: z.string().optional(),
+  // Set when someone without approval rights (a client) asks a consultant to review the fix.
+  reviewRequest: z.object({ at: z.string(), by: z.string(), note: z.string() }).optional(),
 });
 export type Fix = z.infer<typeof FixSchema>;
 

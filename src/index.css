@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+:root { --header-h: 52px; }
 html { -webkit-text-size-adjust: 100%; }
 body { background: #f8fafc; }
 .react-flow__edge-text { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }

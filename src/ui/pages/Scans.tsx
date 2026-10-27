@@ -4,6 +4,7 @@ import type { SourceId } from '../../model/schema';
 import { SNAPSHOTS, useStore } from '../../store';
 import { Badge, Card, PageHeader } from '../components/common';
 import { TOOLS, fmtDateTime } from '../meta';
+import { ChangeHistory } from './ToolPage';
 
 const PHASE2: Record<SourceId, { api: string; auth: string; changes: string; note: string }> = {
   gtm_web: {
@@ -48,14 +49,21 @@ export function Scans() {
   const scans = useStore((s) => s.scans);
   const entities = useStore((s) => s.entities);
   const tools = useStore((s) => s.tools);
+  const changeEvents = useStore((s) => s.changeEvents);
   const latest = scans[0];
 
   return (
     <div>
       <PageHeader
-        title="Scans & sources"
+        title="Scans & history"
         subtitle="A full scan runs every day at 06:00 UTC. An hourly lightweight check looks for config changes (such as a GTM publish) and re-scans that source straight away. You can also re-scan at any time."
       />
+      <h2 className="mb-3 text-sm font-semibold text-slate-800">Change history</h2>
+      <p className="-mt-2 mb-3 text-xs text-slate-500">Every config change across the stack — GTM publishes, GA4 and Google Ads settings, Meta activity, and fixes applied here — newest first.</p>
+      <Card className="mb-8 max-h-[480px] overflow-y-auto">
+        <ChangeHistory events={[...changeEvents].sort((a, b) => a.at.localeCompare(b.at))} />
+      </Card>
+
       <h2 className="mb-3 text-sm font-semibold text-slate-800">Sources</h2>
       <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {(['gtm_web', 'gtm_server', 'ga4', 'google_ads', 'meta'] as SourceId[]).map((s) => {

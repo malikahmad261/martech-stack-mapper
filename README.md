@@ -6,17 +6,20 @@ Maps a martech stack — Google Tag Manager (web + server), Google Analytics 4, 
 
 ## What's in the prototype
 
+Built for two kinds of user: **clients** (monitor health, apply basic fixes) and **consultants** (full technical detail). Switch between them from the avatar menu; **Simple / Detailed** in the top bar controls how much technical detail is shown. Design rationale and research: [docs/UX.md](docs/UX.md).
+
 | Screen | What it shows |
 |---|---|
-| Stack map | Tools and their connections, coloured by health. Click a tool or a connection. |
-| Relationships | Every inferred link (filterable), a tool-to-tool matrix, and "if this breaks, what's affected". |
-| Tool screens | One per tool. Click any tag, event, conversion or campaign to see its upstream and downstream lineage, config and raw source data. |
-| Integration issues | 23 checks; 14 seeded issues with evidence, diagnosis and a recommended fix. |
-| Data anomalies | Spend-driven, tracking outage and bot traffic — detected and classified from daily data, with the likely cause. |
-| Fix queue | Edit the recommendation, approve, apply (simulated). GTM fixes publish a new container version. |
-| Scans & sources | Scan history, "Re-scan now", and what each live connection will need in Phase 2. |
+| Overview | One-line status, then a grid of each business conversion × GA4 / Google Ads / Meta: is it tracking, how many in the last 7 days, and what's wrong. Click a cell to see how the data gets there. |
+| Problems | Issues, the anomalies they caused and their recommended fix, merged into one list with plain-language headlines. Detail shows the impact chart, likely cause, a role-aware fix card, and technical details (evidence, lineage, editable diff). |
+| Stack map / Relationships | Tools and every inferred link between them, coloured by health. |
+| Tool screens | One per tool. Click any tag, event, conversion or campaign for its journey, lineage, config and raw source data. |
+| Scans & history | Every config change across the stack, scan history and "Re-scan now", and what each live connection will need in Phase 2. |
+| Assistant (⌘I) | Ask about anything. Add context with **Ask AI** buttons, row checkboxes, chart date-range selection, ⌘K or `@`. Chips show exactly what will be sent. Replies are scripted from the demo data. |
 
-State (edits, applied fixes, scans) is kept in your browser. **Reset demo** in the top bar restores the original data.
+**Fixes:** clients can apply low-risk fixes and request a consultant's review for the rest; consultants can edit, approve and apply anything. Nothing is sent to any platform.
+
+State (edits, applied fixes, scans, chat) is kept in your browser. **Reset demo** in the sidebar restores the original data.
 
 ## How it's built
 
@@ -30,7 +33,9 @@ src/
   engine/anomalies.ts    Anomaly detection and classification
   engine/fixes.ts        Editable fields, validation, applying changes
   engine/scan.ts         One scan: links → rules → issues/fixes → health → anomalies
-  engine/workflow.ts     Approve / apply / re-scan state transitions
+  engine/workflow.ts     Approve / apply / request review / re-scan state transitions
+  insights/              View models: problems (issues + anomalies + fixes), conversion grid, plain-language copy
+  assistant/             Context items → payloads, and the scripted responder
   ui/                    React screens
 middleware.ts            Basic-auth password gate for Vercel
 ```
