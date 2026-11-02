@@ -7,10 +7,10 @@ import { RULES } from '../../engine/rules';
 import { isActiveProblem, problemIdFor, type Problem } from '../../insights/problems';
 import type { Anomaly, Entity } from '../../model/schema';
 import { useEntityMap, useStore } from '../../store';
-import { useDetailed, useRole } from '../../store/ui';
+import { useRole } from '../../store/ui';
 import { AddToChat, Checkbox, SelectionBar } from '../components/AddToChat';
 import { MetricChart, metricIndex, seriesFor, type Series } from '../components/Charts';
-import { Button, EmptyState, EntityChip, KeyValue, PlainSeverity, ProblemStatusBadge, SectionTitle, Technical, ToolDots } from '../components/common';
+import { Button, EmptyState, EntityChip, KeyValue, PlainSeverity, ProblemStatusBadge, SectionTitle, Segmented, Technical, ToolDots } from '../components/common';
 import { FixCard, FixChangesEditor, FixHistory } from '../components/FixPanel';
 import { LineageSections } from '../components/Lineage';
 import { problemPath, useProblems } from '../hooks';
@@ -32,7 +32,6 @@ export function Problems() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const problems = useProblems();
-  const detailed = useDetailed();
   const role = useRole();
   const [q, setQ] = useState('');
   const [checked, setChecked] = useState<Set<string>>(new Set());
@@ -68,7 +67,10 @@ export function Problems() {
     <li>
       <div
         onClick={() => go(p)}
-        className={clsx('group flex cursor-pointer items-start gap-2.5 border-l-[3px] py-2.5 pl-2.5 pr-3', p.id === id ? 'border-l-indigo-500 bg-indigo-50/70' : 'border-l-transparent hover:bg-slate-50')}
+        className={clsx(
+          'group mx-2 my-0.5 flex cursor-pointer items-start gap-2.5 rounded-xl border py-2.5 pl-2.5 pr-3 transition-colors',
+          p.id === id ? 'border-slate-900/[.06] bg-white/85 shadow-[inset_0_1px_0_#fff,0_4px_14px_-8px_rgba(22,24,64,.2)]' : 'border-transparent hover:bg-white/50',
+        )}
       >
         <span className="pt-0.5">
           <Checkbox checked={checked.has(p.id)} onChange={() => toggle(p.id)} label={`Select ${p.headline}`} />
@@ -77,11 +79,11 @@ export function Problems() {
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium leading-snug text-slate-900">{p.headline}</span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
-            {detailed && p.ruleId && <span className="font-mono text-slate-400">{p.ruleId}</span>}
+            {p.ruleId && <span className="font-mono text-slate-400">{p.ruleId}</span>}
             <ToolDots tools={p.tools} />
             {p.status !== 'open' && <ProblemStatusBadge status={p.status} />}
           </span>
-          {detailed && <span className="mt-1 block truncate text-xs text-slate-400">{p.technicalTitle}</span>}
+          <span className="mt-1 block truncate text-xs text-slate-400">{p.technicalTitle}</span>
         </span>
       </div>
     </li>
@@ -92,39 +94,31 @@ export function Problems() {
 
   return (
     <div className="flex h-[calc(100vh-var(--header-h))]">
-      <div className="flex w-[380px] shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="space-y-2.5 border-b border-slate-100 px-4 pb-2 pt-5">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900">Problems</h1>
-          <div className="flex gap-1 text-sm">
-            {(
-              [
-                ['open', 'Open'],
-                ['review', role === 'consultant' ? 'To review' : 'In review'],
-                ['closed', 'Closed'],
-              ] as const
-            ).map(([v, label]) => (
-              <button
-                key={v}
-                onClick={() => setParams(v === 'open' ? {} : { view: v })}
-                className={clsx('flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 font-medium', view === v ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100')}
-              >
-                {label}
-                <span className={clsx('rounded-full px-1.5 text-xs', view === v ? 'bg-white/20' : v === 'review' && counts.review ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-500')}>{counts[v]}</span>
-              </button>
-            ))}
-          </div>
-          <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus-within:border-slate-400">
+      <div className="flex w-[380px] shrink-0 flex-col border-r border-slate-900/[.07] bg-white/40">
+        <div className="space-y-3 border-b border-slate-900/[.06] px-4 pb-3 pt-6">
+          <h1 className="font-display text-[26px] font-semibold leading-tight tracking-tight text-slate-900">Problems</h1>
+          <Segmented
+            label="Which problems"
+            value={view}
+            onChange={(v) => setParams(v === 'open' ? {} : { view: v })}
+            options={[
+              { id: 'open', label: 'Open', count: counts.open },
+              { id: 'review', label: role === 'consultant' ? 'To review' : 'In review', count: counts.review, accent: true },
+              { id: 'closed', label: 'Closed', count: counts.closed },
+            ]}
+          />
+          <label className="flex h-9 items-center gap-2 rounded-[11px] border border-slate-200 bg-white/70 px-2.5 text-sm transition-colors focus-within:border-indigo-300 focus-within:bg-white">
             <Search size={14} className="text-slate-400" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter problems" className="w-full outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter problems" className="w-full bg-transparent outline-none placeholder:text-slate-400" />
           </label>
         </div>
         <div className="flex-1 overflow-y-auto pb-16">
           {groups.map(({ s, items }) => (
             <div key={s}>
-              <div className="sticky top-0 z-[1] flex items-center gap-2 bg-slate-50/95 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 backdrop-blur">
-                <PlainSeverity severity={s} /> <span>{items.length}</span>
+              <div className="sticky top-0 z-[1] flex items-center gap-2 bg-white/60 px-4 pb-1.5 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-xl">
+                <PlainSeverity severity={s} /> <span className="tabular-nums">{items.length}</span>
               </div>
-              <ul className="divide-y divide-slate-100">
+              <ul>
                 {items.map((p) => (
                   <Row key={p.id} p={p} />
                 ))}
@@ -133,10 +127,10 @@ export function Problems() {
           ))}
           {fyi.length > 0 && (
             <div>
-              <div className="sticky top-0 z-[1] bg-slate-50/95 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500" title="Changes explained by a deliberate change such as a budget edit">
+              <div className="sticky top-0 z-[1] bg-white/60 px-4 pb-1.5 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-xl" title="Changes explained by a deliberate change such as a budget edit">
                 Explained changes · no action needed
               </div>
-              <ul className="divide-y divide-slate-100">
+              <ul>
                 {fyi.map((p) => (
                   <Row key={p.id} p={p} />
                 ))}
@@ -177,7 +171,6 @@ function ProblemDetail({ p }: { p: Problem }) {
   const byId = useEntityMap();
   const changeEvents = useStore((s) => s.changeEvents);
   const { setIssueDismissed, setAnomalyStatus } = useStore.getState();
-  const detailed = useDetailed();
   const location = useLocation();
   const rule = p.ruleId ? RULES.find((r) => r.id === p.ruleId) : undefined;
   const [chartIdx, setChartIdx] = useState(0);
@@ -193,7 +186,7 @@ function ProblemDetail({ p }: { p: Problem }) {
   const markers = causes.map((c) => ({ date: c.at.slice(0, 10), label: c.kind === 'gtm_publish' ? `${TOOLS[c.tool].short} ${c.summary.match(/v\d+/)?.[0] ?? ''}` : c.kind === 'budget_change' ? 'Budget change' : c.kind === 'status_change' ? 'Status change' : 'Config change' }));
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-6 py-6">
+    <div className="mx-auto max-w-3xl animate-fade-in space-y-6 px-6 py-7 sm:px-8">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           {p.fyi ? <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-200">For information</span> : <PlainSeverity severity={p.severity} />}
@@ -204,13 +197,11 @@ function ProblemDetail({ p }: { p: Problem }) {
             <AddToChat item={{ kind: 'problem', id: p.id }} variant="button" />
           </div>
         </div>
-        <h2 className="mt-2 text-xl font-semibold leading-snug text-slate-900">{p.headline}</h2>
-        {detailed && (
-          <p className="mt-1 text-xs text-slate-500">
-            {p.ruleId && <span className="font-mono">{p.ruleId} · </span>}
-            {p.technicalTitle}
-          </p>
-        )}
+        <h2 className="mt-3 text-balance font-display text-[24px] font-semibold leading-tight tracking-tight text-slate-900">{p.headline}</h2>
+        <p className="mt-1.5 text-xs text-slate-500">
+          {p.ruleId && <span className="font-mono">{p.ruleId} · </span>}
+          {p.technicalTitle}
+        </p>
       </div>
 
       <div>
@@ -219,7 +210,7 @@ function ProblemDetail({ p }: { p: Problem }) {
       </div>
 
       {anomaly && anomalyEntity && (
-        <div className="rounded-xl border border-slate-200 p-4">
+        <div className="surface rounded-2xl p-4 sm:p-5">
           <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
             <div>
               <div className="text-sm font-medium text-slate-900">{anomalyEntity.name}</div>
@@ -231,7 +222,7 @@ function ProblemDetail({ p }: { p: Problem }) {
             {p.anomalies.length > 1 && (
               <div className="flex flex-wrap gap-1">
                 {p.anomalies.map((a, i) => (
-                  <button key={a.id} onClick={() => setChartIdx(i)} className={clsx('rounded-md px-2 py-0.5 text-xs', i === chartIdx ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
+                  <button key={a.id} onClick={() => setChartIdx(i)} className={clsx('rounded-lg px-2 py-0.5 text-xs transition-colors', i === chartIdx ? 'bg-slate-900 text-white' : 'bg-slate-900/[.05] text-slate-600 hover:bg-slate-900/10')}>
                     {byId.get(a.entityId)?.name}
                   </button>
                 ))}
@@ -246,14 +237,14 @@ function ProblemDetail({ p }: { p: Problem }) {
         <div>
           <SectionTitle>Likely cause</SectionTitle>
           {causes.map((c) => (
-            <div key={c.id} className="flex items-start gap-3 rounded-xl border border-slate-200 p-3">
+            <div key={c.id} className="surface flex items-start gap-3 rounded-2xl p-3.5">
               <GitCommitHorizontal size={16} className="mt-0.5 shrink-0 text-slate-400" />
               <div className="min-w-0 flex-1 text-sm">
                 <div className="font-medium text-slate-900">{c.summary}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
                   {TOOLS[c.tool].label} · {fmtDateTime(c.at)} · {c.actor}
                 </div>
-                {detailed && Array.isArray(c.after) && (
+                {Array.isArray(c.after) && (
                   <ul className="mt-1.5 text-xs">
                     {(c.after as { entity: string; field: string; value: unknown }[]).map((x, i) => (
                       <li key={i} className="font-mono text-slate-600">
@@ -275,8 +266,8 @@ function ProblemDetail({ p }: { p: Problem }) {
         </div>
       ) : (
         p.anomalies[0] && (
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-indigo-700">{p.fyi ? 'Why this is expected' : 'What to do'}</div>
+          <div className="rounded-2xl border border-indigo-200/80 bg-white/70 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_10px_30px_-14px_rgba(22,24,64,.18)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[.08em] text-indigo-700">{p.fyi ? 'Why this is expected' : 'What to do'}</div>
             <p className="mt-1 text-sm text-slate-700">{p.fyi ? p.anomalies[0].likelyCause.explanation : p.anomalies[0].recommendation}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {p.status === 'open' && p.fyi && <Button onClick={() => setAnomalyStatus(p.anomalies[0].id, 'expected')}>Mark as expected</Button>}
@@ -305,7 +296,7 @@ function ProblemDetail({ p }: { p: Problem }) {
         {p.issue && Object.keys(p.issue.evidence).length > 0 && (
           <div>
             <SectionTitle>Evidence</SectionTitle>
-            <div className="rounded-lg border border-slate-200 px-3">
+            <div className="rounded-xl border border-slate-200 bg-white/50 px-3">
               <KeyValue rows={Object.entries(p.issue.evidence).map(([k, v]) => [k, String(v)])} />
             </div>
           </div>
@@ -355,7 +346,7 @@ function ProblemDetail({ p }: { p: Problem }) {
       </Technical>
 
       {p.issue && (
-        <div className="flex gap-2 border-t border-slate-100 pt-4">
+        <div className="flex gap-2 border-t border-slate-900/[.06] pt-4">
           {p.status === 'dismissed' ? (
             <Button onClick={() => setIssueDismissed(p.issue!.id, false)}>Reopen</Button>
           ) : isActiveProblem(p) ? (
@@ -384,7 +375,7 @@ export function LegacyRedirect({ kind }: { kind: 'issues' | 'anomalies' | 'fixes
 
 export function ProblemLink({ p }: { p: Problem }) {
   return (
-    <Link to={problemPath(p.id)} className="flex items-start gap-2 rounded-lg border border-slate-200 p-2.5 text-sm hover:border-slate-400">
+    <Link to={problemPath(p.id)} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-white/60 p-2.5 text-sm transition-colors hover:border-slate-300 hover:bg-white">
       <PlainSeverity severity={p.severity} />
       <span className="flex-1 text-slate-800">{p.headline}</span>
       <ChevronRight size={16} className="mt-0.5 text-slate-400" />

@@ -33,7 +33,7 @@ export function LineagePaths({ paths, focusId, highlightLinks, empty }: { paths:
   return (
     <ul className="space-y-2">
       {paths.map((p, i) => (
-        <li key={i} className="flex flex-wrap items-center gap-y-1.5 rounded-lg bg-slate-50 p-2">
+        <li key={i} className="surface-2 flex flex-wrap items-center gap-y-1.5 rounded-xl p-2">
           {p.steps.map((s, j) => {
             // A step's linkId connects it to the previous step in the list.
             const link = j > 0 ? g.linkById.get(p.steps[j].linkId ?? '') : undefined;

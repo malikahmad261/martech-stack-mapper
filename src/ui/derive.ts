@@ -12,10 +12,6 @@ export function healthScore(issues: Issue[]) {
   return Math.max(0, 100 - penalty);
 }
 
-export function scoreColor(score: number) {
-  return score >= 80 ? 'text-emerald-600' : score >= 50 ? 'text-amber-600' : 'text-rose-600';
-}
-
 export function toolHealth(tool: ToolId, entities: Entity[]): Health {
   return worstHealth(entities.filter((e) => e.tool === tool && e.health !== 'inactive').map((e) => e.health));
 }

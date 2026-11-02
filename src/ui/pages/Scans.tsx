@@ -55,16 +55,17 @@ export function Scans() {
   return (
     <div>
       <PageHeader
+        eyebrow="Monitoring"
         title="Scans & history"
         subtitle="A full scan runs every day at 06:00 UTC. An hourly lightweight check looks for config changes (such as a GTM publish) and re-scans that source straight away. You can also re-scan at any time."
       />
-      <h2 className="mb-3 text-sm font-semibold text-slate-800">Change history</h2>
-      <p className="-mt-2 mb-3 text-xs text-slate-500">Every config change across the stack — GTM publishes, GA4 and Google Ads settings, Meta activity, and fixes applied here — newest first.</p>
-      <Card className="mb-8 max-h-[480px] overflow-y-auto">
-        <ChangeHistory events={[...changeEvents].sort((a, b) => a.at.localeCompare(b.at))} />
+      <Card className="mb-8" title="Change history" subtitle="Every config change across the stack: GTM publishes, GA4 and Google Ads settings, Meta activity, and fixes applied here. Newest first.">
+        <div className="max-h-[480px] overflow-y-auto">
+          <ChangeHistory events={[...changeEvents].sort((a, b) => a.at.localeCompare(b.at))} />
+        </div>
       </Card>
 
-      <h2 className="mb-3 text-sm font-semibold text-slate-800">Sources</h2>
+      <h2 className="mb-3 font-display text-[17px] font-semibold tracking-tight text-slate-900">Sources</h2>
       <div className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {(['gtm_web', 'gtm_server', 'ga4', 'google_ads', 'meta'] as SourceId[]).map((s) => {
           const t = tools.find((x) => x.id === s)!;
@@ -72,10 +73,10 @@ export function Scans() {
           const count = entities.filter((e) => e.tool === s).length;
           const p = PHASE2[s];
           return (
-            <Card key={s} className="flex flex-col">
-              <div className="flex items-start justify-between gap-2 px-4 pt-4">
+            <Card key={s} className="flex flex-col overflow-hidden">
+              <div className="flex items-start justify-between gap-2 px-5 pt-4">
                 <div>
-                  <div className="flex items-center gap-2 font-semibold text-slate-900">
+                  <div className="flex items-center gap-2 font-display font-semibold tracking-tight text-slate-900">
                     <span className="h-3 w-3 rounded" style={{ background: TOOLS[s].color }} />
                     {TOOLS[s].label}
                   </div>
@@ -83,7 +84,7 @@ export function Scans() {
                 </div>
                 <Badge className="bg-amber-50 text-amber-800 ring-amber-200">Demo data</Badge>
               </div>
-              <div className="grid grid-cols-2 gap-2 px-4 py-3 text-xs">
+              <div className="grid grid-cols-2 gap-2 px-5 py-3 text-xs">
                 <div>
                   <div className="text-slate-500">Last sync</div>
                   <div className="font-medium text-slate-800">{latest ? fmtDateTime(latest.startedAt) : '—'}</div>
@@ -97,7 +98,7 @@ export function Scans() {
                   <div className="font-mono text-slate-800">{snap.format}</div>
                 </div>
               </div>
-              <div className="mt-auto space-y-1 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-600">
+              <div className="mt-auto space-y-1 border-t border-slate-900/[.06] bg-white/40 px-5 py-3 text-xs text-slate-600">
                 <div className="mb-1 flex items-center gap-1 font-semibold text-slate-700">
                   <Plug size={12} /> Phase 2 live connection
                 </div>
@@ -111,13 +112,12 @@ export function Scans() {
         })}
       </div>
 
-      <h2 className="mb-3 text-sm font-semibold text-slate-800">Scan history</h2>
-      <Card>
+      <Card title="Scan history">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-slate-500">
-              <tr className="border-b border-slate-100">
-                <th className="px-4 py-2 font-medium">Started</th>
+              <tr className="border-b border-slate-900/[.06]">
+                <th className="px-5 py-2.5 font-medium">Started</th>
                 <th className="px-4 py-2 font-medium">Trigger</th>
                 <th className="px-4 py-2 font-medium">Sources</th>
                 <th className="px-4 py-2 font-medium">Duration</th>
@@ -126,13 +126,13 @@ export function Scans() {
                 <th className="px-4 py-2 text-right font-medium">Config changes</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-900/[.06]">
               {scans.map((s) => {
                 const tr = TRIGGER[s.trigger];
                 const Icon = tr.icon;
                 return (
                   <tr key={s.id}>
-                    <td className="whitespace-nowrap px-4 py-2">{fmtDateTime(s.startedAt)}</td>
+                    <td className="whitespace-nowrap px-5 py-2.5">{fmtDateTime(s.startedAt)}</td>
                     <td className="px-4 py-2">
                       <Badge className={tr.cls}>
                         <Icon size={11} />
