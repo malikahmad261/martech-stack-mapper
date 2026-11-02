@@ -40,7 +40,7 @@ export function Markdown({ text }: { text: string }) {
       const quote: string[] = [];
       while (i < lines.length && lines[i].startsWith('>')) quote.push(lines[i++].replace(/^>\s?/, ''));
       blocks.push(
-        <blockquote key={k++} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+        <blockquote key={k++} className="rounded-xl border border-slate-200 bg-white/50 px-3 py-2">
           <Markdown text={quote.join('\n')} />
         </blockquote>,
       );

@@ -78,7 +78,7 @@ export function MetricChart({
   return (
     <div className="relative w-full">
     {selectFor && range && drag?.done && (
-      <div className="absolute right-2 top-0 z-10 flex items-center gap-1 rounded-lg border border-violet-200 bg-white p-0.5 shadow-md">
+      <div className="absolute right-2 top-0 z-10 flex animate-pop-in items-center gap-1 rounded-xl border border-violet-200 bg-white/90 p-0.5 shadow-[0_10px_30px_-12px_rgba(22,24,64,.3)] backdrop-blur">
         <button
           onClick={() => {
             useChat.getState().add({ kind: 'metric', entityId: selectFor, start: range[0], end: range[1] });
@@ -102,14 +102,14 @@ export function MetricChart({
           onMouseMove={selectFor ? (e: any) => drag && !drag.done && e?.activeLabel && setDrag({ ...drag, b: e.activeLabel }) : undefined}
           onMouseUp={selectFor ? () => drag && setDrag(drag.a === drag.b ? null : { ...drag, done: true }) : undefined}
         >
-          <CartesianGrid stroke="#f1f5f9" vertical={false} />
-          <XAxis dataKey="date" tickFormatter={(d) => fmtDate(`${d}T00:00:00Z`)} tick={{ fontSize: 11, fill: '#94a3b8' }} minTickGap={36} axisLine={false} tickLine={false} />
-          <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={44} tickFormatter={fmtNum} />
-          {hasRight && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={40} tickFormatter={fmtNum} />}
+          <CartesianGrid stroke="rgba(29,33,82,.07)" vertical={false} />
+          <XAxis dataKey="date" tickFormatter={(d) => fmtDate(`${d}T00:00:00Z`)} tick={{ fontSize: 11, fill: '#8c91aa' }} minTickGap={36} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#8c91aa' }} axisLine={false} tickLine={false} width={44} tickFormatter={fmtNum} />
+          {hasRight && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: '#8c91aa' }} axisLine={false} tickLine={false} width={40} tickFormatter={fmtNum} />}
           <Tooltip
             labelFormatter={(d) => fmtDate(`${d}T00:00:00Z`)}
             formatter={(v: number, name: string) => [fmtNum(v), series.find((s) => s.key === name)?.label ?? name]}
-            contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: '#e2e8f0' }}
+            contentStyle={{ fontSize: 12, borderRadius: 12, border: '1px solid rgba(29,33,82,.1)', background: 'rgba(255,255,255,.92)', boxShadow: '0 10px 30px -12px rgba(22,24,64,.3)', backdropFilter: 'blur(12px)' }}
           />
           {series.length > 1 && <Legend formatter={(k) => series.find((s) => s.key === k)?.label ?? k} wrapperStyle={{ fontSize: 12 }} iconType="plainline" />}
           {window && <ReferenceArea yAxisId="left" x1={window.start} x2={window.end} fill={windowColor} fillOpacity={0.08} stroke={windowColor} strokeOpacity={0.3} />}

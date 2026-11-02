@@ -2,7 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { --header-h: 52px; }
-html { -webkit-text-size-adjust: 100%; }
-body { background: #f8fafc; }
-.react-flow__edge-text { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+/*
+ * Design tokens. Light theme only for now; a dark theme redefines these same variables.
+ * Neutrals are RGB triplets so Tailwind's opacity modifiers (bg-slate-900/20) keep working.
+ */
+:root {
+  --header-h: 60px;
+
+  --slate-50: 245 246 251;
+  --slate-100: 236 237 245;
+  --slate-200: 222 224 236;
+  --slate-300: 200 203 220;
+  --slate-400: 140 145 170;
+  --slate-500: 108 113 140;
+  --slate-600: 78 83 114;
+  --slate-700: 58 62 92;
+  --slate-800: 38 41 70;
+  --slate-900: 21 23 47;
+  --slate-950: 12 13 30;
+
+  --bg: #eceef8;
+  --line: rgba(29, 33, 82, 0.085);
+  --hi: rgba(255, 255, 255, 0.9);
+  --card: rgba(255, 255, 255, 0.72);
+  --card-2: rgba(255, 255, 255, 0.5);
+  --chrome: rgba(248, 248, 255, 0.58);
+  --over: rgba(246, 246, 255, 0.8);
+  --shadow: 0 1px 2px rgba(22, 24, 64, 0.04), 0 10px 30px -12px rgba(22, 24, 64, 0.16);
+  --shadow-lg: 0 24px 60px -20px rgba(22, 24, 64, 0.35);
+
+  /* The still colour field behind everything. --urgency (0–1) warms it when something is broken. */
+  --au-1: #b4a9ff;
+  --au-2: #8fe1ea;
+  --au-3: #ffcde4;
+  --au-4: #c4f0da;
+  --au-bad: #ff9ab2;
+  --au-op: 0.8;
+  --urgency: 0;
+
+  --ai-from: #5a48f0;
+  --ai-to: #1aa6c0;
+
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: var(--bg);
+  color: rgb(var(--slate-900));
+  -webkit-font-smoothing: antialiased;
+}
+.react-flow__edge-text {
+  font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer components {
+  /* Sidebar and top bar: real blur, content scrolls underneath. */
+  .glass-chrome {
+    background: var(--chrome);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
+  /* Drawers, dialogs, the command palette: the strongest glass, clearly above the page. */
+  .glass-over {
+    background: var(--over);
+    -webkit-backdrop-filter: blur(30px) saturate(170%);
+    backdrop-filter: blur(30px) saturate(170%);
+    box-shadow: inset 0 1px 0 var(--hi), var(--shadow-lg);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-chrome,
+    .glass-over {
+      background: rgb(var(--slate-50));
+    }
+  }
+  /* Cards: frosted but unblurred, so dense tables stay sharp and cheap to draw. */
+  .surface {
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 var(--hi), var(--shadow);
+  }
+  .surface-2 {
+    background: var(--card-2);
+    border: 1px solid var(--line);
+  }
+  .ai-gradient {
+    background-image: linear-gradient(120deg, var(--ai-from), var(--ai-to));
+  }
+}
+
+/* Anyone who asks their system for less motion gets near-instant transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

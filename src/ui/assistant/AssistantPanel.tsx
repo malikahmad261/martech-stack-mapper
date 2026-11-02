@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { AlertTriangle, ArrowUp, ChevronDown, ChevronRight, GitCommitHorizontal, LineChart, Loader2, Plus, RotateCcw, Sparkles, Target, X } from 'lucide-react';
+import { AlertTriangle, ArrowUp, ChevronDown, ChevronRight, GitCommitHorizontal, LineChart, Plus, RotateCcw, Sparkles, Target, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { estimateTokens, resolveContext, type ContextItem, type ResolvedContext } from '../../assistant/context';
@@ -29,7 +29,7 @@ function Chip({ r, onRemove, onClick, active }: { r: ResolvedContext; onRemove?:
   return (
     <span
       className={clsx(
-        'inline-flex max-w-[220px] items-center gap-1.5 rounded-md border bg-white py-0.5 pl-1.5 text-xs text-slate-700',
+        'inline-flex max-w-[220px] items-center gap-1.5 rounded-lg border bg-white/80 py-0.5 pl-1.5 text-xs text-slate-700',
         onRemove ? 'pr-0.5' : 'pr-1.5',
         active ? 'border-violet-400 ring-2 ring-violet-100' : 'border-slate-200',
       )}
@@ -74,14 +74,14 @@ function ContextPicker({ query, onQuery, onPick, onClose, showInput }: { query: 
     return () => window.removeEventListener('keydown', onKey, true);
   }, [results, active, onPick, onClose]);
   return (
-    <div className="absolute inset-x-3 bottom-full z-20 mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+    <div className="glass-over absolute inset-x-3 bottom-full z-20 mb-2 animate-pop-in overflow-hidden rounded-2xl border border-white/70">
       {showInput && (
-        <input autoFocus value={query} onChange={(e) => onQuery?.(e.target.value)} placeholder="Search problems, conversions, tags, events…" className="w-full border-b border-slate-100 px-3 py-2 text-sm outline-none" />
+        <input autoFocus value={query} onChange={(e) => onQuery?.(e.target.value)} placeholder="Search problems, conversions, tags, events…" className="w-full border-b border-slate-900/[.06] bg-transparent px-3 py-2.5 text-sm outline-none" />
       )}
-      <ul className="max-h-64 overflow-y-auto py-1">
+      <ul className="max-h-64 overflow-y-auto p-1">
         {results.map((r, i) => (
           <li key={r.id}>
-            <button onMouseEnter={() => setActive(i)} onClick={() => onPick(r.context!)} className={clsx('flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm', i === active && 'bg-violet-50')}>
+            <button onMouseEnter={() => setActive(i)} onClick={() => onPick(r.context!)} className={clsx('flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm', i === active && 'bg-violet-500/10')}>
               <ContextIcon item={r.context!} />
               <span className="min-w-0 flex-1 truncate">{r.label}</span>
               <span className="shrink-0 text-[11px] text-slate-400">{r.sublabel}</span>
@@ -90,7 +90,7 @@ function ContextPicker({ query, onQuery, onPick, onClose, showInput }: { query: 
         ))}
         {!results.length && <li className="px-3 py-2 text-sm text-slate-400">No matches</li>}
       </ul>
-      <div className="border-t border-slate-100 bg-slate-50 px-3 py-1 text-[11px] text-slate-400">↑↓ to move · Enter to add · Esc to close</div>
+      <div className="border-t border-slate-900/[.06] bg-white/40 px-3 py-1.5 text-[11px] text-slate-400">↑↓ to move · Enter to add · Esc to close</div>
     </div>
   );
 }
@@ -102,11 +102,11 @@ function Steps({ steps, pending }: { steps: string[]; pending?: boolean }) {
   return (
     <div className="mb-2 text-xs text-slate-500">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1 hover:text-slate-700">
-        {pending ? <Loader2 size={12} className="animate-spin" /> : show ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {show ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         {pending ? 'Working…' : `${steps.length} step${steps.length > 1 ? 's' : ''}`}
       </button>
       {show && (
-        <ul className="ml-1.5 mt-1 space-y-0.5 border-l border-slate-200 pl-3">
+        <ul className="ml-1.5 mt-1 animate-fade-in space-y-0.5 border-l border-slate-200 pl-3">
           {steps.map((s) => (
             <li key={s}>{s}</li>
           ))}
@@ -121,7 +121,7 @@ function Message({ m, data, onAction }: { m: ChatMessage; data: ReturnType<typeo
     const chips = m.context.map((c) => resolveContext(c, data)).filter((r): r is ResolvedContext => !!r);
     return (
       <div className="flex flex-col items-end gap-1.5">
-        <div className="max-w-[90%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-violet-600 px-3 py-2 text-sm text-white">{m.text}</div>
+        <div className="max-w-[90%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-indigo-600 px-3.5 py-2 text-sm text-white shadow-[0_6px_16px_-10px_rgba(79,70,229,.8)]">{m.text}</div>
         {chips.length > 0 && (
           <div className="flex max-w-[90%] flex-wrap justify-end gap-1">
             {chips.map((r) => (
@@ -133,13 +133,14 @@ function Message({ m, data, onAction }: { m: ChatMessage; data: ReturnType<typeo
     );
   }
   return (
-    <div>
+    <div className="animate-fade-in">
       <Steps steps={m.steps ?? []} pending={m.pending && !m.text} />
+      {m.pending && !m.text && <div className="text-xs text-slate-400">Working…</div>}
       {m.text && <Markdown text={m.text} />}
       {!m.pending && m.actions && m.actions.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {m.actions.map((a) => (
-            <button key={a.label} onClick={() => onAction(a)} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm hover:border-violet-300 hover:text-violet-700">
+            <button key={a.label} onClick={() => onAction(a)} className="inline-flex items-center gap-1 rounded-[10px] border border-slate-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-700 shadow-[inset_0_1px_0_#fff] transition-colors hover:border-violet-300 hover:text-violet-700">
               {a.add ? <Plus size={12} /> : <ChevronRight size={12} />}
               {a.label}
             </button>
@@ -189,12 +190,8 @@ export function AssistantPanel() {
     const reply = respond(msg, ctx, data);
     const id = uid();
     push({ id, role: 'assistant', text: '', context: [], steps: [], pending: true });
-    // Reveal the steps, then stream the text, so it reads like an agent at work.
-    reply.steps.forEach((_, i) => setTimeout(() => update(id, { steps: reply.steps.slice(0, i + 1) }), 260 * (i + 1)));
-    const start = 260 * (reply.steps.length + 1);
-    const chunks = Math.ceil(reply.text.length / 14);
-    for (let i = 1; i <= chunks; i++) setTimeout(() => update(id, { text: reply.text.slice(0, i * 14) }), start + i * 12);
-    setTimeout(() => update(id, { text: reply.text, actions: reply.actions, pending: false }), start + chunks * 12 + 30);
+    // A short pause, then the whole reply at once. The steps it took stay one click away.
+    setTimeout(() => update(id, { steps: reply.steps, text: reply.text, actions: reply.actions, pending: false }), 450);
   };
 
   const onAction = (a: ChatAction) => {
@@ -215,20 +212,22 @@ export function AssistantPanel() {
   const previewed = resolved.find((r) => r.key === preview);
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[420px] shrink-0 flex-col border-l border-slate-200 bg-white">
-      <header className="flex items-center gap-2 border-b border-slate-200 px-4 py-2.5">
-        <Sparkles size={16} className="text-violet-600" />
-        <span className="text-sm font-semibold text-slate-900">Assistant</span>
+    <aside className="glass-chrome sticky top-0 z-20 flex h-screen w-[420px] shrink-0 animate-fade-in flex-col border-l border-slate-900/[.07] shadow-[inset_1px_0_0_rgba(255,255,255,.7)]">
+      <header className="flex h-[var(--header-h)] shrink-0 items-center gap-2 border-b border-slate-900/[.07] px-4">
+        <span className="ai-gradient grid h-6 w-6 place-items-center rounded-full text-white">
+          <Sparkles size={13} />
+        </span>
+        <span className="font-display text-[15px] font-semibold tracking-tight text-slate-900">Assistant</span>
         <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800" title="Phase 1 prototype: replies are scripted from the demo data, not generated by an LLM">
           Demo replies
         </span>
         <div className="ml-auto flex items-center gap-0.5">
           {messages.length > 0 && (
-            <button onClick={newChat} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800" title="Start a new chat">
+            <button onClick={newChat} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-900/[.05] hover:text-slate-800" title="Start a new chat">
               <RotateCcw size={12} /> New
             </button>
           )}
-          <button onClick={() => setOpen(false)} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close assistant" title="Close (⌘I)">
+          <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-900/[.05] hover:text-slate-700" aria-label="Close assistant" title="Close (⌘I)">
             <X size={16} />
           </button>
         </div>
@@ -238,7 +237,7 @@ export function AssistantPanel() {
         {messages.length === 0 && (
           <div className="space-y-3 text-sm text-slate-600">
             <p>Ask about anything in BrightPath Solar's stack. I answer from the latest scan.</p>
-            <div className="rounded-lg bg-slate-50 p-3 text-xs leading-relaxed text-slate-500">
+            <div className="surface-2 rounded-xl p-3 text-xs leading-relaxed text-slate-500">
               <div className="mb-1 font-medium text-slate-700">Give me context</div>
               Click <Sparkles size={11} className="inline text-violet-600" /> <strong>Ask AI</strong> on a problem, tick rows in a table, drag across a chart to pick dates, or type <kbd className="rounded border border-slate-200 bg-white px-1">@</kbd> to search. You'll see exactly what gets sent before you send it.
             </div>
@@ -249,7 +248,7 @@ export function AssistantPanel() {
         ))}
       </div>
 
-      <div className="relative border-t border-slate-200 bg-slate-50/60 px-3 pb-3 pt-2.5">
+      <div className="relative border-t border-slate-900/[.07] bg-white/30 px-3 pb-3 pt-2.5">
         {picker && (
           <ContextPicker
             query={picker.query}
@@ -260,8 +259,8 @@ export function AssistantPanel() {
           />
         )}
         {previewed && (
-          <div className="absolute inset-x-3 bottom-full z-10 mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
+          <div className="glass-over absolute inset-x-3 bottom-full z-10 mb-2 animate-pop-in overflow-hidden rounded-2xl border border-white/70">
+            <div className="flex items-center justify-between border-b border-slate-900/[.06] px-3 py-2">
               <div className="text-xs">
                 <span className="font-medium text-slate-800">Exactly what will be sent</span>
                 <span className="ml-1.5 text-slate-400">~{estimateTokens(previewed.payload)} tokens</span>
@@ -278,7 +277,7 @@ export function AssistantPanel() {
           {resolved.map((r) => (
             <Chip key={r.key} r={r} active={preview === r.key} onClick={() => setPreview(preview === r.key ? null : r.key)} onRemove={() => remove(r.key)} />
           ))}
-          <button onClick={() => setPicker(picker?.mode === 'plus' ? null : { mode: 'plus', query: '' })} className="inline-flex items-center gap-1 rounded-md border border-dashed border-slate-300 px-1.5 py-0.5 text-xs text-slate-500 hover:border-violet-400 hover:text-violet-700">
+          <button onClick={() => setPicker(picker?.mode === 'plus' ? null : { mode: 'plus', query: '' })} className="inline-flex items-center gap-1 rounded-lg border border-dashed border-slate-300 px-1.5 py-0.5 text-xs text-slate-500 hover:border-violet-400 hover:text-violet-700">
             <Plus size={11} /> Add context
           </button>
           <span className="ml-auto text-[11px] text-slate-400">
@@ -289,14 +288,14 @@ export function AssistantPanel() {
         {!text && !busy && (
           <div className="mb-2 flex flex-wrap gap-1">
             {prompts.map((p) => (
-              <button key={p} onClick={() => send(p)} className="rounded-full border border-violet-200 bg-white px-2.5 py-0.5 text-xs text-violet-700 hover:bg-violet-50">
+              <button key={p} onClick={() => send(p)} className="rounded-full border border-violet-200 bg-white/70 px-2.5 py-1 text-xs text-violet-700 transition-colors hover:bg-white">
                 {p}
               </button>
             ))}
           </div>
         )}
 
-        <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-white p-1.5 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
+        <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white/85 p-1.5 shadow-[inset_0_1px_0_#fff] transition-shadow focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
           <textarea
             ref={input}
             value={text}
@@ -317,7 +316,7 @@ export function AssistantPanel() {
             placeholder={resolved.length ? 'Ask about the selected items…' : 'Ask anything, or type @ to add context'}
             className="max-h-32 flex-1 resize-none bg-transparent px-1.5 py-1 text-sm outline-none placeholder:text-slate-400"
           />
-          <button onClick={() => send(text)} disabled={!text.trim() || busy} className="rounded-lg bg-violet-600 p-1.5 text-white transition hover:bg-violet-700 disabled:opacity-40" aria-label="Send">
+          <button onClick={() => send(text)} disabled={!text.trim() || busy} className="ai-gradient rounded-[10px] p-1.5 text-white transition-[filter,opacity] hover:brightness-110 disabled:opacity-40" aria-label="Send">
             <ArrowUp size={16} />
           </button>
         </div>

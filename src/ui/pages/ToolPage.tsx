@@ -6,7 +6,6 @@ import type { ContextItem } from '../../assistant/context';
 import { isAppActor } from '../../engine/workflow';
 import type { ChangeEvent, Entity, EntityKind, ToolId } from '../../model/schema';
 import { SNAPSHOTS, useStore } from '../../store';
-import { useDetailed } from '../../store/ui';
 import { AddToChat, Checkbox, SelectionBar } from '../components/AddToChat';
 import { MetricChart, seriesFor } from '../components/Charts';
 import { Badge, Card, Drawer, EmptyState, EntityChip, HealthBadge, HealthDot, KeyValue, PageHeader, SectionTitle, Sparkline, Tabs, Technical, ToolBadge } from '../components/common';
@@ -73,7 +72,7 @@ function Pill({ children, tone = 'slate' }: { children: React.ReactNode; tone?: 
     rose: 'bg-rose-50 text-rose-700',
     indigo: 'bg-indigo-50 text-indigo-700',
   };
-  return <span className={clsx('rounded px-1.5 py-0.5 text-[11px] font-medium', tones[tone])}>{children}</span>;
+  return <span className={clsx('rounded-md px-1.5 py-0.5 text-[11px] font-medium', tones[tone])}>{children}</span>;
 }
 
 /** One-line description of an entity for tables. */
@@ -194,9 +193,9 @@ function getRaw(snapshotId: string, path: string): unknown {
 export function ChangeHistory({ events }: { events: ChangeEvent[] }) {
   if (!events.length) return <EmptyState>No changes recorded.</EmptyState>;
   return (
-    <ul className="divide-y divide-slate-100">
+    <ul className="divide-y divide-slate-900/[.06]">
       {[...events].reverse().map((c) => (
-        <li key={c.id} className="group px-4 py-3">
+        <li key={c.id} className="group px-5 py-3.5">
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-medium text-slate-900">{c.summary}</span>
             <AddToChat item={{ kind: 'change', id: c.id }} className="opacity-0 group-hover:opacity-100" />
@@ -231,7 +230,6 @@ export function ChangeHistory({ events }: { events: ChangeEvent[] }) {
 export function EntityPanel({ entityId }: { entityId: string }) {
   const g = useGraph();
   const problems = useProblems();
-  const detailed = useDetailed();
   const e = g.byId.get(entityId);
   const [showRaw, setShowRaw] = useState(false);
   if (!e) return <div className="p-6 text-sm text-slate-500">This entity no longer exists.</div>;
@@ -242,7 +240,7 @@ export function EntityPanel({ entityId }: { entityId: string }) {
   const raw = getRaw(e.sourceRef.snapshotId, e.sourceRef.path);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 sm:p-7">
       <div className="pr-8">
         <div className="flex flex-wrap items-center gap-2">
           <ToolBadge tool={e.tool} />
@@ -250,8 +248,8 @@ export function EntityPanel({ entityId }: { entityId: string }) {
           <HealthBadge health={e.health} />
           {e.status !== 'active' && <Badge className="bg-slate-100 text-slate-600 ring-slate-200">{e.status}</Badge>}
         </div>
-        <h2 className="mt-2 text-lg font-semibold text-slate-900">{e.name}</h2>
-        {detailed && <div className="mt-0.5 font-mono text-xs text-slate-400">ID {e.externalId}</div>}
+        <h2 className="mt-2 text-balance font-display text-[22px] font-semibold leading-tight tracking-tight text-slate-900">{e.name}</h2>
+        <div className="mt-0.5 font-mono text-xs text-slate-400">ID {e.externalId}</div>
         <div className="mt-2 text-sm text-slate-600">
           <EntitySummary e={e} byId={g.byId} />
         </div>
@@ -324,7 +322,7 @@ export function EntityPanel({ entityId }: { entityId: string }) {
             <ExternalLink size={12} />
             {showRaw ? 'Hide' : 'Show'} raw source data ({e.sourceRef.path})
           </button>
-          {showRaw && <pre className="mt-2 max-h-80 overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100">{JSON.stringify(raw ?? 'Derived entity — no raw source', null, 2)}</pre>}
+          {showRaw && <pre className="mt-2 max-h-80 animate-fade-in overflow-auto rounded-xl bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-100">{JSON.stringify(raw ?? 'Derived entity — no raw source', null, 2)}</pre>}
         </div>
       </Technical>
     </div>
@@ -339,7 +337,6 @@ export function ToolPage() {
   const changeEvents = useStore((s) => s.changeEvents);
   const g = useGraph();
   const problems = useProblems();
-  const detailed = useDetailed();
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const tool = tools.find((t) => t.id === toolId);
   const tabs = toolId ? TABS[toolId] : undefined;
@@ -380,6 +377,12 @@ export function ToolPage() {
     <div>
       <PageHeader
         title={t.label}
+        eyebrow={
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-sm" style={{ background: t.color }} />
+            Tool
+          </span>
+        }
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
             <span className="font-mono">{tool.externalId}</span>
@@ -394,7 +397,7 @@ export function ToolPage() {
       />
       <div className="mb-5 flex flex-wrap gap-2">
         {Object.entries(s).map(([k, v]) => (
-          <span key={k} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs">
+          <span key={k} className="surface-2 rounded-[10px] px-2.5 py-1 text-xs">
             <span className="text-slate-500">{k.replace(/([A-Z])/g, ' $1').toLowerCase()}:</span>{' '}
             <span className="font-medium text-slate-800">{typeof v === 'boolean' ? (v ? 'on' : 'off') : v == null || v === '' ? '—' : String(v)}</span>
           </span>
@@ -402,7 +405,7 @@ export function ToolPage() {
       </div>
 
       <Card>
-        <div className="px-4 pt-2">
+        <div className="px-4 pt-1.5">
           <Tabs tabs={tabs.map((x) => ({ id: x.id, label: x.label, count: x.kinds ? g.entities.filter((e) => e.tool === tool.id && x.kinds!.includes(e.kind) && (!x.filter || x.filter(e))).length : undefined }))} value={tab!} onChange={setTab} />
         </div>
         {def.history ? (
@@ -411,8 +414,8 @@ export function ToolPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-slate-500">
-                <tr className="border-b border-slate-100">
-                  <th className="w-8 py-2 pl-4">
+                <tr className="border-b border-slate-900/[.06]">
+                  <th className="w-8 py-2.5 pl-5">
                     <Checkbox
                       label="Select all"
                       checked={rows.length > 0 && rows.every(({ e }) => checked.has(e.id))}
@@ -422,18 +425,18 @@ export function ToolPage() {
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Details</th>
                   <th className="px-4 py-2 font-medium">Health</th>
-                  {detailed && <th className="whitespace-nowrap px-4 py-2 text-right font-medium" title="Entities upstream / downstream">Up / Down</th>}
+                  <th className="whitespace-nowrap px-4 py-2 text-right font-medium" title="Entities upstream / downstream">Up / Down</th>
                   <th className="px-4 py-2 font-medium">Trend</th>
                   <th className="w-10" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-900/[.06]">
                 {rows.map(({ e, up, down }) => {
                   const series = seriesFor(e)[0];
                   const n = toolIssueCount(issues, e.id);
                   return (
-                    <tr key={e.id} onClick={() => open(e.id)} className={clsx('group cursor-pointer hover:bg-slate-50', (selected === e.id || checked.has(e.id)) && 'bg-indigo-50/50')}>
-                      <td className="py-2.5 pl-4">
+                    <tr key={e.id} onClick={() => open(e.id)} className={clsx('group cursor-pointer transition-colors hover:bg-white/60', (selected === e.id || checked.has(e.id)) && 'bg-indigo-500/[.06]')}>
+                      <td className="py-2.5 pl-5">
                         <Checkbox label={`Select ${e.name}`} checked={checked.has(e.id)} onChange={() => toggleRow(e.id)} />
                       </td>
                       <td className="px-4 py-2.5">
@@ -449,11 +452,9 @@ export function ToolPage() {
                           {n > 0 && <span className="text-xs text-rose-600">{n} issue{n > 1 ? 's' : ''}</span>}
                         </span>
                       </td>
-                      {detailed && (
-                        <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-slate-600">
-                          {up} / {down}
-                        </td>
-                      )}
+                      <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-slate-600">
+                        {up} / {down}
+                      </td>
                       <td className="px-4 py-2.5">{series && <Sparkline values={series.values.slice(-45)} color={series.color} />}</td>
                       <td className="pr-3">
                         <AddToChat item={{ kind: 'entity', id: e.id }} className="opacity-0 group-hover:opacity-100 focus:opacity-100" />

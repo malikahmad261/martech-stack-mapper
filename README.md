@@ -6,7 +6,7 @@ Maps a martech stack — Google Tag Manager (web + server), Google Analytics 4, 
 
 ## What's in the prototype
 
-Built for two kinds of user: **clients** (monitor health, apply basic fixes) and **consultants** (full technical detail). Switch between them from the avatar menu; **Simple / Detailed** in the top bar controls how much technical detail is shown. Design rationale and research: [docs/UX.md](docs/UX.md).
+Built for two kinds of user: **clients** (monitor health, apply basic fixes) and **consultants** (review, edit and apply any fix). Switch between them from the avatar menu. Everyone sees the same, fully detailed screens: plain-language headlines first, with IDs, rule codes and raw config underneath. The interface uses a calm frosted-glass look (light theme for now) with short, functional transitions only. Design rationale and research: [docs/UX.md](docs/UX.md).
 
 | Screen | What it shows |
 |---|---|

@@ -14,7 +14,7 @@ function Select<T extends string>({ value, onChange, options, label }: { value: 
   return (
     <label className="flex flex-col gap-1 text-xs text-slate-500">
       {label}
-      <select value={value} onChange={(e) => onChange(e.target.value as T | '')} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800">
+      <select value={value} onChange={(e) => onChange(e.target.value as T | '')} className="rounded-[10px] border border-slate-200 bg-white/80 px-2.5 py-1.5 text-sm text-slate-800">
         <option value="">All</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -57,11 +57,12 @@ export function Relationships() {
   return (
     <div>
       <PageHeader
+        eyebrow="Explore the stack"
         title="Relationships & dependencies"
         subtitle="Every link between entities across the stack, inferred from each tool's configuration. Links are listed in data-flow order: where data comes from → where it goes."
       />
       <Card>
-        <div className="px-4 pt-2">
+        <div className="px-4 pt-1.5">
           <Tabs
             tabs={[
               { id: 'links', label: 'All links', count: g.links.length },
@@ -75,7 +76,7 @@ export function Relationships() {
 
         {view === 'links' && (
           <>
-            <div className="flex flex-wrap gap-3 border-b border-slate-100 px-4 py-3">
+            <div className="flex flex-wrap gap-3 border-b border-slate-900/[.06] px-5 py-3.5">
               <Select label="From tool" value={from} onChange={(v) => set('from', v)} options={TOOL_ORDER.map((t) => ({ value: t, label: TOOLS[t].label }))} />
               <Select label="To tool" value={to} onChange={(v) => set('to', v)} options={TOOL_ORDER.map((t) => ({ value: t, label: TOOLS[t].label }))} />
               <Select label="Relationship" value={type} onChange={(v) => set('type', v)} options={(Object.keys(FLOW_LABELS) as LinkType[]).map((t) => ({ value: t, label: FLOW_LABELS[t] }))} />
@@ -85,18 +86,18 @@ export function Relationships() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-slate-500">
-                  <tr className="border-b border-slate-100">
-                    <th className="px-4 py-2 font-medium">Source</th>
+                  <tr className="border-b border-slate-900/[.06]">
+                    <th className="px-5 py-2.5 font-medium">Source</th>
                     <th className="px-4 py-2 font-medium">Relationship</th>
                     <th className="px-4 py-2 font-medium">Target</th>
                     <th className="px-4 py-2 font-medium">Health</th>
                     <th className="px-4 py-2 font-medium">Evidence</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-900/[.06]">
                   {filtered.map((r) => (
-                    <tr key={r.l.id} className="align-top">
-                      <td className="px-4 py-2">
+                    <tr key={r.l.id} className="align-top transition-colors hover:bg-white/50">
+                      <td className="px-5 py-2">
                         <EntityChip entity={r.src} showKind />
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-xs text-slate-600">{r.label}</td>
@@ -156,7 +157,7 @@ function Matrix({ rows, onPick }: { rows: { src: { tool: ToolId }; dst: { tool: 
                     <button
                       disabled={!cell.length}
                       onClick={() => onPick(a, b)}
-                      className={clsx('h-14 w-20 rounded-lg text-center ring-1 ring-inset transition', cell.length ? `${HEALTH[h!].badge} hover:brightness-95` : 'bg-slate-50 text-slate-300 ring-slate-100')}
+                      className={clsx('h-14 w-20 rounded-xl text-center ring-1 ring-inset transition-[filter]', cell.length ? `${HEALTH[h!].badge} hover:brightness-95` : 'bg-white/30 text-slate-300 ring-slate-900/[.05]')}
                     >
                       <div className="text-base font-semibold tabular-nums">{cell.length || '·'}</div>
                       {h && <div className="text-[10px]">{HEALTH[h].label}</div>}
@@ -188,7 +189,7 @@ function Impact() {
         <select
           value={selected}
           onChange={(e) => setParams({ view: 'impact', entity: e.target.value })}
-          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-800"
+          className="rounded-[10px] border border-slate-200 bg-white/80 px-2.5 py-1.5 text-sm text-slate-800"
         >
           {TOOL_ORDER.map((t) => (
             <optgroup key={t} label={TOOLS[t].label}>
@@ -210,7 +211,7 @@ function Impact() {
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {byTool.map(({ t, items }) => (
-              <div key={t} className="rounded-lg border border-slate-200 p-3">
+              <div key={t} className="surface-2 rounded-xl p-3">
                 <div className="mb-2 text-xs font-semibold" style={{ color: TOOLS[t].color }}>
                   {TOOLS[t].label} · {items.length}
                 </div>

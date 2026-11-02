@@ -54,12 +54,16 @@ export function Journey({ entityId }: { entityId: string }) {
           {journeys.length > 1 && <span className="mr-1 w-14 text-xs text-slate-400">{hops.some((h) => h.tool === 'gtm_server') ? 'Server' : 'Browser'}</span>}
           {hops.map((h, j) => (
             <span key={j} className="flex items-center gap-1.5">
-              {j > 0 && <ArrowRight size={14} className={clsx(h.health === 'healthy' ? 'text-slate-300' : 'text-rose-400')} />}
+              {j > 0 && <ArrowRight size={14} className={clsx(h.health === 'healthy' ? 'text-slate-300' : h.health === 'degraded' ? 'text-amber-400' : 'text-rose-400')} />}
               <span
                 title={h.names.join(' → ')}
                 className={clsx(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium',
-                  h.health === 'healthy' ? 'border-slate-200 bg-white text-slate-700' : h.health === 'degraded' ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-rose-300 bg-rose-50 text-rose-800',
+                  'inline-flex items-center gap-1.5 rounded-[11px] border px-2.5 py-1.5 text-xs font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,.9)]',
+                  h.health === 'healthy'
+                    ? 'border-slate-200 bg-white/80 text-slate-700'
+                    : h.health === 'degraded'
+                      ? 'border-amber-300 bg-amber-50/80 text-amber-900 ring-4 ring-amber-400/10'
+                      : 'border-rose-300 bg-rose-50/80 text-rose-800 ring-4 ring-rose-500/10',
                 )}
               >
                 <span className="h-2 w-2 rounded-sm" style={{ background: TOOLS[h.tool].color }} />

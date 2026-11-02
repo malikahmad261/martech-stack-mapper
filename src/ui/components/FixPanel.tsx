@@ -26,7 +26,7 @@ export function describeOp(o: Fix['current'][number], byId: Map<string, Entity>)
 }
 
 function ValueEditor({ def, value, onChange, entity, baseEntities, disabled }: { def: FieldDef; value: unknown; onChange: (v: unknown) => void; entity: Entity; baseEntities: Entity[]; disabled: boolean }) {
-  const input = 'w-full rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-xs text-slate-800 disabled:bg-slate-50';
+  const input = 'w-full rounded-lg border border-slate-200 bg-white/80 px-2 py-1 font-mono text-xs text-slate-800 disabled:bg-slate-50/60';
   switch (def.type) {
     case 'boolean':
       return (
@@ -139,9 +139,9 @@ export function FixChangesEditor({ fix }: { fix: Fix }) {
         {fix.current.length === 0 ? (
           <EmptyState>No configuration changes — this is a manual fix done in the platform.</EmptyState>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white/50">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs text-slate-500">
+              <thead className="bg-white/50 text-left text-xs text-slate-500">
                 <tr>
                   <th className="px-3 py-2 font-medium">Target</th>
                   <th className="px-3 py-2 font-medium">Field</th>
@@ -150,7 +150,7 @@ export function FixChangesEditor({ fix }: { fix: Fix }) {
                   <th className="w-8" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 align-top">
+              <tbody className="divide-y divide-slate-900/[.06] align-top">
                 {fix.current.map((op, idx) => {
                   const target = baseById.get(op.entityId);
                   const def = target ? editableFields(target).find((f) => f.path === op.field) : undefined;
@@ -195,7 +195,7 @@ export function FixChangesEditor({ fix }: { fix: Fix }) {
         {!locked && candidates.length > 0 && (
           <div className="mt-2">
             {adding ? (
-              <div className="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-slate-300 p-2.5">
+              <div className="flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-slate-300 bg-white/40 p-2.5">
                 <label className="flex flex-col gap-1 text-xs text-slate-500">
                   Target
                   <select value={adding.entityId} onChange={(e) => setAdding({ entityId: e.target.value, field: '' })} className="rounded-md border border-slate-200 px-2 py-1 text-sm">
@@ -256,7 +256,7 @@ export function FixChangesEditor({ fix }: { fix: Fix }) {
             onChange={(e) => updateFix(fix.id, { notes: e.target.value })}
             rows={2}
             placeholder="Why you're making this change, ticket reference…"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm disabled:bg-slate-50"
+            className="w-full rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-sm disabled:bg-slate-50/60"
           />
         </div>
       )}
@@ -298,15 +298,15 @@ export function FixCard({ fix }: { fix: Fix }) {
   const doApply = () => (fix.status === 'approved' ? applyFix(fix.id) : approveAndApply(fix.id));
 
   return (
-    <div className={clsx('rounded-xl border p-4', fix.status === 'applied' ? 'border-emerald-200 bg-emerald-50/40' : 'border-indigo-200 bg-indigo-50/40')}>
+    <div className={clsx('rounded-2xl border p-5 shadow-[inset_0_1px_0_rgba(255,255,255,.9),0_10px_30px_-14px_rgba(22,24,64,.18)]', fix.status === 'applied' ? 'border-emerald-200 bg-emerald-50/60' : 'border-indigo-200/80 bg-white/70')}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="text-xs font-semibold uppercase tracking-wide text-indigo-700">How to fix it</div>
+        <div className="text-[11px] font-semibold uppercase tracking-[.08em] text-indigo-700">How to fix it</div>
         <div className={clsx('flex items-center gap-1 text-xs font-medium', RISK[fix.risk].cls)}>
           <ShieldCheck size={13} /> {RISK[fix.risk].label}
           {role === 'client' && fix.status !== 'applied' && <span className="font-normal text-slate-500">· {RISK[fix.risk].client}</span>}
         </div>
       </div>
-      <div className="mt-1 font-medium text-slate-900">{fix.title}</div>
+      <div className="mt-1 font-display text-[17px] font-semibold tracking-tight text-slate-900">{fix.title}</div>
       <p className="mt-1 text-sm text-slate-600">{fix.rationale}</p>
 
       {manual ? (
@@ -322,7 +322,7 @@ export function FixCard({ fix }: { fix: Fix }) {
               <span className="text-slate-500">{o.target}:</span>
               <span>{o.field}</span>
               <span className="text-slate-400">→</span>
-              <code className="rounded bg-white px-1 font-mono text-xs text-emerald-700 ring-1 ring-slate-200">{o.to}</code>
+              <code className="rounded-md bg-white px-1.5 font-mono text-xs text-emerald-700 ring-1 ring-slate-200">{o.to}</code>
             </li>
           ))}
           {ops.length > 4 && <li className="text-xs text-slate-500">…and {ops.length - 4} more changes (see technical details)</li>}
@@ -330,7 +330,7 @@ export function FixCard({ fix }: { fix: Fix }) {
       )}
 
       {fix.reviewRequest && fix.status !== 'applied' && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-800">
+        <div className="mt-3 flex items-start gap-2 rounded-xl bg-violet-50/80 px-3 py-2 text-sm text-violet-800 ring-1 ring-violet-200/70">
           <UserCheck size={15} className="mt-0.5 shrink-0" />
           <span>
             {role === 'client' ? `You asked ${consultant} to review this` : `${fix.reviewRequest.by} asked for a review`} on {fmtDate(fix.reviewRequest.at)}
@@ -392,7 +392,7 @@ export function FixCard({ fix }: { fix: Fix }) {
       </div>
 
       {fix.verifyAfter.length > 0 && fix.status !== 'rejected' && (
-        <div className="mt-4 border-t border-indigo-100 pt-3">
+        <div className="mt-4 border-t border-slate-900/[.06] pt-3">
           <div className="mb-1 text-xs font-medium text-slate-500">{fix.status === 'applied' ? 'Check that it worked' : 'After applying, check'}</div>
           <ul className="space-y-1 text-sm text-slate-700">
             {fix.verifyAfter.map((s) => (
@@ -436,7 +436,7 @@ export function FixCard({ fix }: { fix: Fix }) {
                 const t = byId.get(o.entityId);
                 const d = describeOp(o, byId);
                 return (
-                  <li key={o.id} className="rounded bg-slate-50 p-2 font-mono">
+                  <li key={o.id} className="rounded-lg bg-white/70 p-2 font-mono ring-1 ring-slate-900/[.06]">
                     <div className="font-sans font-medium text-slate-800">
                       {d.target} — {d.field}
                     </div>
@@ -472,7 +472,7 @@ export function FixCard({ fix }: { fix: Fix }) {
         <p className="mb-3 text-sm text-slate-600">
           {fix.risk === 'low' ? 'This fix is low risk, but you can still ask for a second opinion.' : `This fix is ${fix.risk} risk, so a consultant needs to approve it before it's applied.`} {consultant} will see it at the top of their review list.
         </p>
-        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Anything they should know? (optional)" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Anything they should know? (optional)" className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm" />
       </Modal>
     </div>
   );
